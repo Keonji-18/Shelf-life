@@ -1,0 +1,48 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model user {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  email        String     @unique
+  name         String
+  hashPassword String
+  household    household? @relation(fields: [householdId], references: [id])
+  householdId  String?    @db.ObjectId
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model household {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  inviteCode String   @unique
+  members    user[]
+  inventory  item[]   @relation(fields: [itemId], references: [id])
+  itemId     String[] @db.ObjectId
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model item {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  quantity    Int         @default(1)
+  expiry      DateTime
+  household   household[] @relation(fields: [householdId], references: [id])
+  householdId String[]    @db.ObjectId
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
