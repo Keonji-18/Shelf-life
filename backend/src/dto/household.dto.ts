@@ -1,9 +1,10 @@
 import {household as Household} from "../../generated/prisma";
-import {toUserResponseDto} from "./user.dto";
-import {HouseholdWithMembers} from "../repo/household.repo";
+import {toUserResponseDto, UserResponseDto} from "./user.dto";
+import {FullHousehold, HouseholdWithInventory, HouseholdWithMembers} from "../repo/household.repo";
 import {AppError} from "../core/errors/AppError";
 import {HTTP_STATUS} from "../core/http/httpStatus";
 import {ERROR_CODES} from "../core/errors/errorCodes";
+import {ItemResponseDto, toItemResponseDto} from "./item.dto";
 
 
 export interface HouseholdDto{
@@ -17,7 +18,13 @@ export interface HouseholdDto{
     updatedAt: Date
 }
 
+export interface HouseholdWithMembersDto extends HouseholdDto{
+    members: UserResponseDto[]
+}
 
+export interface HouseholdWithItemsDto extends HouseholdDto{
+    inventory: ItemResponseDto[]
+}
 
 export function toHouseholdResponseDto(details: Household): HouseholdDto{
 
@@ -42,8 +49,7 @@ export function toHouseholdResponseDto(details: Household): HouseholdDto{
 }
 
 
-export function toHouseholdWithMembersDto( details:HouseholdWithMembers ){
-
+export function toHouseholdWithMembersDto( details:HouseholdWithMembers ): HouseholdWithMembersDto{
 
     if(!details){
         throw new AppError("Household not found",
@@ -53,9 +59,36 @@ export function toHouseholdWithMembersDto( details:HouseholdWithMembers ){
 
     const {members, ...detail} = details;
     return{
-            detail,
+            ...detail,
             members: members.map(member => toUserResponseDto(member))
     }
 
 }
 
+export function toHouseholdDtoWithInventoryDto(details: HouseholdWithInventory): HouseholdWithItemsDto{
+    if(!details){
+        throw new AppError("Household not found",
+            HTTP_STATUS.NOT_FOUND,
+            ERROR_CODES.HOUSEHOLD_NOT_FOUND)
+    }
+
+    const {inventory, ...detail} = details
+    return{
+        ...detail,
+        inventory: inventory.map(item => toItemResponseDto(item))
+    }
+}
+
+export function toHouseholdWithFullDetails(details: FullHousehold){
+    if(!details){
+        throw new AppError("Household not found",
+            HTTP_STATUS.NOT_FOUND,
+            ERROR_CODES.HOUSEHOLD_NOT_FOUND)
+    }
+    const {inventory, members, ...detail} = details
+    return{
+        ...detail,
+        members: members.map(member => toUserResponseDto(member)),
+        inventory: inventory.map(item => toItemResponseDto(item))
+    }
+}

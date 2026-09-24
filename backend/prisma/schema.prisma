@@ -39,7 +39,7 @@ model household {
 model item {
   id          String      @id @default(auto()) @map("_id") @db.ObjectId
   name        String
-  quantity    Int         @default(1)
+  barcode     String      @unique
   expiry      DateTime
   household   household[] @relation(fields: [householdId], references: [id])
   householdId String[]    @db.ObjectId

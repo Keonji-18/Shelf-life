@@ -1,6 +1,7 @@
 import {NextFunction, Request, Response} from "express";
 import {LoginUser, loginUserSchema, RegisterUser, registerUserSchema} from "../validation/user.validation";
 import {CreateHousehold, createHouseholdSchema} from "../validation/household.validation";
+import {addItemInputSchema, ItemInput, updateItemInputSchema} from "../validation/item.vaidation";
 
 
 export function userRegisterValidator(
@@ -55,4 +56,34 @@ export function createHouseholdValidator(
         next(error);
     }
 
+}
+
+export function addItemValidator(
+    req:Request,
+    res:Response,
+    next:NextFunction
+){
+
+    try {
+        const input = req.body as ItemInput
+        const result = addItemInputSchema.parse(input);
+        next()
+    }catch(error){
+        next(error);
+    }
+}
+
+export function updateItemValidator(
+    req: Request,
+    res: Response,
+    next: NextFunction
+){
+
+    try {
+        const input = req.body as ItemInput
+        const result = updateItemInputSchema.parse(input);
+        next()
+    }catch(error){
+        next(error);
+    }
 }

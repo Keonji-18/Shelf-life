@@ -18,7 +18,7 @@ export function generateAccessToken({email,id}:UserPayload): string {
     try {
         const payload: UserPayload = { email, id }
 
-        return jwt.sign(payload, jwtSecret, {expiresIn: '7Days'})
+        return jwt.sign(payload, jwtSecret, {expiresIn: '7d'})
     } catch (error) {
         throw new AppError("Invalid username or password", HTTP_STATUS.UNAUTHORIZED, ERROR_CODES.UNAUTHORIZED, false)
     }
