@@ -1,11 +1,11 @@
 import {Router} from 'express';
 import {userLoginValidator, userRegisterValidator,} from "../middleware/validator.middleware";
-import {getMe, loginUser, registerUser} from "../controller/user.controller";
+import {getMe, loginUser, registerUser, userController} from "../controller/user.controller";
 import {authenticateUser} from "../middleware/auth.middleware";
 
 export const userRouter = Router();
 
-userRouter.post('/users/register', userRegisterValidator, registerUser)
-userRouter.post('/users/login', userLoginValidator, loginUser)
-
-userRouter.get('/users/me',authenticateUser, getMe)
+userRouter.post('/register', userRegisterValidator, userController.register)
+userRouter.post('/login', userLoginValidator, userController.login)
+userRouter.post('/logout',authenticateUser, userController.logout)
+userRouter.get('/me',authenticateUser, userController.getMe)

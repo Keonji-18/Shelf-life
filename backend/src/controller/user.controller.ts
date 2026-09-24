@@ -6,7 +6,7 @@ import {HTTP_STATUS} from "../core/http/httpStatus";
 
 
 
-export async function registerUser(
+ async function register(
     req: Request,
     res: Response) {
 
@@ -20,7 +20,7 @@ export async function registerUser(
     });
 }
 
-export async function loginUser(
+ async function login(
     req: Request,
     res: Response
 ){
@@ -37,7 +37,21 @@ export async function loginUser(
     })
 }
 
-export async function getMe(
+async function logout(
+    req: Request,
+    res: Response
+){
+
+    res.clearCookie("ACCESS_TOKEN",{httpOnly: true})
+
+    res.status(HTTP_STATUS.OK).json({
+        success: true,
+        message:"Logged out successfully",
+    })
+
+}
+
+ async function getMe(
     req: Request,
     res: Response
 ){
@@ -50,4 +64,11 @@ export async function getMe(
         data: result
 
     })
+}
+
+export const userController = {
+    register,
+    login,
+    logout,
+    getMe
 }

@@ -14,8 +14,8 @@ app.use(requestLoggerMiddleware)
 app.use(express.json())
 app.use(cookieParser())
 
-app.use(userRouter)
-app.use(authenticateUser, householdRouter)
+app.use('/users',userRouter)
+app.use('/households', authenticateUser, householdRouter)
 
 app.get('/', (req, res) => {
 

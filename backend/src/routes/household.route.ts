@@ -4,13 +4,13 @@ import {householdController} from "../controller/household.controller";
 
 export const householdRouter = Router();
 
-householdRouter.post("/households", createHouseholdValidator, householdController.create);
-householdRouter.get('/households/:householdId', householdController.getById);
-householdRouter.get('/households/:householdId/details', householdController.getDetails);
-householdRouter.get('/households/:householdId/members', householdController.getMembers);
-householdRouter.post('/households/join', householdController.addMember)
-householdRouter.delete('/households/:householdId/members', householdController.deleteMember);
-householdRouter.patch('/households/:householdId/:itemId', updateItemValidator, householdController.updateItem)
-householdRouter.post('/households/:householdId', addItemValidator, householdController.addItem)
-householdRouter.get('/households/:householdId/:itemId/status', householdController.getItemStatus)
-householdRouter.delete('/households/:householdId/:itemId', householdController.deleteItem);
+householdRouter.post("/", createHouseholdValidator, householdController.create);
+householdRouter.get('/:householdId', householdController.getById);
+householdRouter.get('/:householdId/details', householdController.getDetails);
+householdRouter.get('/:householdId/members', householdController.getMembers);
+householdRouter.post('/join', householdController.addMember)
+householdRouter.delete('/:householdId/members', householdController.deleteMember);
+householdRouter.patch('/:householdId/:itemId', updateItemValidator, householdController.updateItem)
+householdRouter.post('/:householdId', addItemValidator, householdController.addItem)
+householdRouter.get('/:householdId/:itemId/status', householdController.getItemStatus)
+householdRouter.delete('/:householdId/:itemId', householdController.deleteItem);
