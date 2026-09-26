@@ -1,193 +1,135 @@
 # Shelf Life Backend
 
-A TypeScript + Express backend for a household inventory and shelf-life tracking application. The service supports user authentication, household management, member joining through invite codes, and item tracking with expiry visibility.
-
-## Overview
-
-This backend is built around the following workflow:
-
-- Users register and log in
-- Logged-in users can create a household
-- Household members can join using an invite code
-- A household can contain multiple inventory items
-- Each item includes a barcode, expiry date, and item status lookup
-- Protected routes require a valid JWT stored in an HTTP-only cookie
+The Shelf Life backend is an Express and TypeScript API for authenticated household inventory management. It stores data in MongoDB through Prisma and uses an HTTP-only cookie containing a JWT for authentication.
 
 ## Features
 
-- User registration and login
-- Authenticated profile retrieval via `/users/me`
-- Household creation
-- Household detail and member queries
-- Join household flow using `inviteCode`
-- Remove current user from a household
-- Add, update, delete, and inspect household inventory items
-- Expiry-based item status calculation
-- MongoDB persistence via Prisma
-- Request validation with Zod
-- Structured error handling and request logging
+- User registration, login, logout, and current-user lookup
+- Household creation, lookup, member listing, joining, and leaving
+- Household inventory item CRUD operations
+- Item search, sorting, and expiry status lookup
+- Zod request validation
+- Centralized application errors and JSON responses
+- Request IDs and request logging
 
 ## Tech Stack
 
-- Node.js
-- TypeScript
-- Express
-- Prisma ORM
-- MongoDB
-- JWT via `jsonwebtoken`
-- bcrypt for password hashing
-- Zod for validation
-- Winston for logging
-- dotenv for environment configuration
-- cookie-parser for cookie-based auth
+- Node.js and TypeScript
+- Express 5
+- Prisma ORM with MongoDB
+- Zod
+- `jsonwebtoken` and `bcrypt`
+- `cookie-parser`
+- Winston
 
 ## Project Structure
 
 ```text
 backend/
-├── prisma/
-│   └── schema.prisma
-├── generated/
-│   └── prisma/
+├── prisma/schema.prisma       # MongoDB schema
+├── generated/prisma/          # Generated Prisma client
 ├── src/
-│   ├── app.ts
-│   ├── server.ts
-│   ├── config/
-│   │   ├── db.ts
-│   │   ├── env.ts
-│   │   ├── index.ts
-│   │   └── logger.ts
-│   ├── context/
-│   │   └── request-context.ts
-│   ├── controller/
-│   │   ├── household.controller.ts
-│   │   └── user.controller.ts
-│   ├── core/
-│   │   ├── errors/
-│   │   │   ├── AppError.ts
-│   │   │   ├── ErrorHandler.ts
-│   │   │   └── errorCodes.ts
-│   │   └── http/
-│   │       ├── ApiResponse.ts
-│   │       └── httpStatus.ts
-│   ├── dto/
-│   │   ├── household.dto.ts
-│   │   ├── item.dto.ts
-│   │   └── user.dto.ts
-│   ├── middleware/
-│   │   ├── auth.middleware.ts
-│   │   ├── request-context.middleware.ts
-│   │   ├── request-logger.middleware.ts
-│   │   └── validator.middleware.ts
-│   ├── repo/
-│   │   ├── household.repo.ts
-│   │   └── user.repo.ts
-│   ├── routes/
-│   │   ├── household.route.ts
-│   │   └── user.route.ts
-│   ├── services/
-│   │   ├── household.service.ts
-│   │   └── user.service.ts
-│   ├── utils/
-│   │   └── auth.util.ts
-│   ├── validation/
-│   │   ├── household.validation.ts
-│   │   ├── item.vaidation.ts
-│   │   └── user.validation.ts
-│   └── types.d.ts
+│   ├── app.ts                 # Express app and route registration
+│   ├── server.ts              # Server entry point
+│   ├── config/                # Environment, database, and logger setup
+│   ├── context/               # Per-request context
+│   ├── controller/            # HTTP request handlers
+│   ├── core/                  # Error and HTTP response primitives
+│   ├── dto/                   # Response mapping and DTO types
+│   ├── middleware/            # Auth, validation, context, and logging
+│   ├── repo/                  # Prisma data-access functions
+│   ├── routes/                # Express route definitions
+│   ├── services/              # Application and business logic
+│   ├── utils/                 # Shared helpers, including JWT utilities
+│   ├── validation/            # Zod schemas for request bodies
+│   └── types.d.ts             # Express request and domain type extensions
 ├── package.json
 ├── prisma.config.ts
-├── tsconfig.json
-└── README.md
+└── tsconfig.json
 ```
 
-## Authentication
+## Request Flow
 
-Authentication is cookie-based. After a successful login, the server sets an HTTP-only cookie named `ACCESS_TOKEN`.
+Requests enter through `src/app.ts`, where request context, logging, JSON parsing, and cookie parsing are installed. Routes dispatch to controllers, controllers call services, and services use repositories for Prisma operations. Errors are passed to the final centralized error handler.
 
-Protected household routes require a valid `ACCESS_TOKEN` and are guarded by `authenticateUser` middleware.
+Routes are mounted as follows:
 
-Key behavior:
+```text
+/users                         public and authenticated user operations
+/households                    authenticated household operations
+/households/:householdId       authenticated inventory operations
+```
 
-- Login is successful only when credentials match the stored user record
-- Passwords are hashed with bcrypt before saving
-- JWT secret is validated at startup using `JWT_SECRET`
-- Only household routes are protected; public user auth routes are open
+Successful responses use this shape:
 
-## Environment Configuration
+```json
+{
+  "success": true,
+  "data": {}
+}
+```
 
-A `.env` file is required in the backend root.
+## Configuration
 
-Example:
+Create `backend/.env` before starting the server:
 
 ```env
 PORT=3001
 NODE_ENV=development
 DATABASE_URL="mongodb+srv://<username>:<password>@<host>/<database>"
-JWT_SECRET="a-very-long-random-secret-of-at-least-32-characters"
+JWT_SECRET="a-secret-with-at-least-32-characters"
 ```
 
-Required variables:
+`PORT` and `NODE_ENV` default to `3001` and `development`. `DATABASE_URL` must be a valid MongoDB URL, and `JWT_SECRET` must be at least 32 characters long. Invalid configuration stops the process during startup.
 
-- `PORT`: optional, defaults to `3001`
-- `NODE_ENV`: optional, must be `development`, `test`, or `production`
-- `DATABASE_URL`: required MongoDB connection string
-- `JWT_SECRET`: required JWT signing secret, minimum 32 characters
-
-## Installation
+## Setup and Commands
 
 ```bash
 cd backend
 npm install
-```
-
-Generate Prisma client:
-
-```bash
 npx prisma generate
 ```
 
-Run in development mode:
+Start the development server with reload-on-change:
 
 ```bash
 npm run dev
 ```
 
-Build the project:
+Build and start the compiled server:
 
 ```bash
 npm run build
-```
-
-Start the compiled server:
-
-```bash
 npm start
 ```
 
-## Database Setup
+The API is available at `http://localhost:${PORT}`. The root endpoint, `GET /`, returns a small server health response.
 
-The project uses MongoDB via Prisma.
+Useful Prisma commands:
 
-Prisma schema includes these models:
-
-- `user`
-- `household`
-- `item`
-
-The schema is defined in `prisma/schema.prisma` and uses MongoDB Object IDs for each model.
-
-## API Endpoints
-
-### User routes
-
-#### Register user
-
-```http
-POST /users/register
+```bash
+npx prisma validate
+npx prisma generate
+npx prisma db push
 ```
 
-Request body:
+The repository does not currently contain migrations or a seed script. `db push` can be used when applying the current schema directly to a development database.
+
+## Authentication
+
+`POST /users/login` signs a JWT and sets it in an HTTP-only `ACCESS_TOKEN` cookie. Protected routes read this cookie through `cookie-parser` and `authenticateUser` middleware.
+
+The login cookie is configured with a seven-day lifetime. Clients must preserve cookies between requests; an `Authorization` bearer header is not used by the current implementation.
+
+## API Reference
+
+All request bodies are JSON. Unless stated otherwise, authenticated endpoints require a valid `ACCESS_TOKEN` cookie.
+
+### Users
+
+#### `POST /users/register`
+
+Creates a user. The name must contain at least 3 characters, the password must be 8-32 characters, and the email must be valid.
 
 ```json
 {
@@ -197,13 +139,9 @@ Request body:
 }
 ```
 
-#### Login user
+#### `POST /users/login`
 
-```http
-POST /users/login
-```
-
-Request body:
+Authenticates a user and sets the `ACCESS_TOKEN` cookie.
 
 ```json
 {
@@ -212,25 +150,19 @@ Request body:
 }
 ```
 
-Response sets the `ACCESS_TOKEN` cookie.
+#### `POST /users/logout`
 
-#### Get current user
+Clears the authentication cookie.
 
-```http
-GET /users/me
-```
+#### `GET /users/me`
 
-Requires authenticated user.
+Returns the authenticated user without the stored password hash.
 
-### Household routes
+### Households
 
-#### Create household
+#### `POST /households`
 
-```http
-POST /households
-```
-
-Request body:
+Creates a household for the authenticated user. The name must contain at least 5 characters.
 
 ```json
 {
@@ -238,47 +170,43 @@ Request body:
 }
 ```
 
-#### Get household by id
+#### `GET /households/:householdId`
 
-```http
-GET /households/:householdId
-```
+Returns the household and its stored item ID references.
 
-#### Get household details
+#### `GET /households/:householdId/details`
 
-```http
-GET /households/:householdId/details
-```
+Returns the household with its members and inventory.
 
-Returns household details including members and inventory.
+#### `GET /households/:householdId/members`
 
-#### Get household members
+Returns the household members.
 
-```http
-GET /households/:householdId/members
-```
+#### `POST /households/join?inviteCode=<invite-code>`
 
-#### Join household
+Joins the household identified by the `inviteCode` query parameter. This endpoint does not expect a request body.
 
-```http
-POST /households/join?inviteCode=<invite-code>
-```
+#### `DELETE /households/:householdId/members`
 
-#### Remove current user from household
+Removes the authenticated user from the household.
 
-```http
-DELETE /households/:householdId/members
-```
+### Inventory Items
 
-Requires authenticated user.
+Inventory routes are mounted below `/households/:householdId`.
 
-#### Add inventory item
+#### `GET /households/:householdId/items`
 
-```http
-POST /households/:householdId
-```
+Returns the household's items. Optional query parameters:
 
-Request body:
+- `search`: case-insensitive name search
+- `sortBy`: `name` or `expiry`
+- `sortOrder`: `asc` or `desc`
+
+Items default to newest first by `createdAt`.
+
+#### `POST /households/:householdId/items`
+
+Adds an item. `barcode` must be exactly 12 characters and `expiry` must be a valid date.
 
 ```json
 {
@@ -288,1465 +216,35 @@ Request body:
 }
 ```
 
-#### Update inventory item
+#### `PATCH /households/:householdId/:itemId`
 
-```http
-PATCH /households/:householdId/:itemId
-```
+Updates any supplied item fields: `name`, `barcode`, or `expiry`.
 
-#### Get item status
+#### `GET /households/:householdId/:itemId/status`
 
-```http
-GET /households/:householdId/:itemId/status
-```
+Returns the item with an expiry status of `fresh`, `Expires Soon`, or `Expired`.
 
-Returns item details plus an expiry-based status label.
+#### `DELETE /households/:householdId/:itemId`
 
-#### Delete inventory item
+Deletes the item from the household inventory.
 
-```http
-DELETE /households/:householdId/:itemId
-```
+## Data Model
 
-## Validation
+The Prisma schema in `prisma/schema.prisma` defines three MongoDB collections:
 
-The app uses Zod schemas for request validation in `src/validation/` and `src/middleware/validator.middleware.ts`.
+- `user`: email, display name, password hash, optional household relation, and timestamps
+- `household`: name, unique invite code, member relation, item ID references, and timestamps
+- `item`: name, unique 12-character barcode, expiry date, household ID references, and timestamps
 
-Examples of validations:
+MongoDB ObjectIds are represented as strings in the TypeScript API. Password hashes are never included in response DTOs.
 
-- user name/email/password rules
-- household name length rules
-- item name and barcode checks
-- expiry date conversion and validation
+## Error Handling and Validation
 
-Invalid payloads are passed to the global Express error handler.
+Request validators use Zod schemas from `src/validation`. Validation middleware rejects invalid input before the controller runs. Application errors are represented by `AppError` and formatted by `src/core/errors/ErrorHandler`; responses include the appropriate HTTP status and structured error information.
 
-## Error Handling
+## Current Boundaries
 
-The project includes a central error layer under `src/core/errors/`:
-
-- `AppError` for application-level errors
-- `ErrorHandler` for Express error middleware
-- `errorCodes.ts` for consistent code values
-- `httpStatus.ts` for HTTP status constants
-
-## Notes
-
-- The app currently uses JWT in cookies rather than bearer tokens in the Authorization header.
-- The app is tightly scoped to household-level inventory logic and does not yet include advanced authorization, refresh tokens, or multi-tenant admin roles.
-- The repository includes generated Prisma client files under `generated/prisma/` and expects them to be present after running `npx prisma generate`.
-
-## Useful Commands
-
-```bash
-npm run dev
-npm run build
-npm start
-npx prisma generate
-npx prisma validate
-```
-
-## Next Improvements
-
-Potential next steps for the project could include:
-
-- API documentation with Swagger/OpenAPI
-- refresh-token support
-- improved household permission checks
-- item categorization and quantity tracking
-- test coverage for services and routes
-- Docker setup for local development
-| `createdAt` | `DateTime` | Yes | No | Creation timestamp |
-| `updatedAt` | `DateTime` | Yes | No | Update timestamp |
-
-Relationships:
-
-- A user can belong to one `household` via `householdId`
-- A household has many users in `members`
-
-#### `household`
-
-| Field | Type | Required | Unique | Description |
-| --- | --- | --- | --- | --- |
-| `id` | `String @id @default(auto()) @map("_id") @db.ObjectId` | Yes | Yes | MongoDB ObjectId primary key |
-| `name` | `String` | Yes | No | Household name |
-| `inviteCode` | `String` | Yes | Yes | Unique invite code used to join a household |
-| `itemId` | `String[] @db.ObjectId` | No | No | Array of related item IDs |
-| `createdAt` | `DateTime` | Yes | No | Creation timestamp |
-| `updatedAt` | `DateTime` | Yes | No | Update timestamp |
-
-Relationships:
-
-- A household has many `user` records in `members`
-- A household can include many `item` records via `itemId`
-
-#### `item`
-
-| Field | Type | Required | Unique | Description |
-| --- | --- | --- | --- | --- |
-| `id` | `String @id @default(auto()) @map("_id") @db.ObjectId` | Yes | Yes | MongoDB ObjectId primary key |
-| `name` | `String` | Yes | No | Item name |
-| `quantity` | `Int @default(1)` | Yes | No | Item quantity |
-| `expiry` | `DateTime` | Yes | No | Expiry date |
-| `householdId` | `String[] @db.ObjectId` | No | No | Household associations |
-| `createdAt` | `DateTime` | Yes | No | Creation timestamp |
-| `updatedAt` | `DateTime` | Yes | No | Update timestamp |
-
-### Relationships and notes
-
-The schema contains a many-to-many style relation between `household` and `item` via `itemId`/`householdId` arrays, but the actual route implementation does not expose item CRUD endpoints. The current backend only implements user and household flows.
-
-### Migrations and seeding
-
-- Prisma config includes a `migrations` path: `prisma/migrations`
-- No migration files were found in the repository.
-- No seed script was found in `package.json`.
-- The app expects the database to already exist or be created outside the current codebase with Prisma commands.
-
-### Prisma commands relevant to this project
-
-```bash
-npx prisma generate
-npx prisma db push
-```
-
-If migrations are added in the future, the usual sequence would be:
-
-```bash
-npx prisma migrate dev
-```
-
-This is not currently shown in the codebase as an implemented workflow.
-
-## 8. Running the Backend
-
-### Development
-
-```bash
-npm run dev
-```
-
-This starts the app with `tsx watch ./src/server.ts`.
-
-### Production build
-
-```bash
-npm run build
-npm start
-```
-
-The production start command is:
-
-```bash
-node ./dist/server.js
-```
-
-### Server URL and port
-
-The server listens on:
-
-```text
-http://localhost:${PORT}
-```
-
-Default port from code: `3001` if `PORT` is not set in the environment. The local `.env` file in the repo sets `PORT=3000`, so in this workspace the app is expected to run on port `3000` unless the environment is changed.
-
-## 9. API Documentation
-
-### Root route
-
-#### `GET /`
-
-**Description:**
-
-Returns a simple hello-world message.
-
-**Authentication:**
-
-- Not required
-
-**Request:**
-
-```http
-GET /
-```
-
-**Success response:**
-
-```json
-{
-  "message": "Hello World"
-}
-```
-
-**Status:** `200 OK`
-
----
-
-### Authentication / Users
-
-#### `POST /users/register`
-
-**Description:**
-
-Registers a new user with a name, email, and password.
-
-**Authentication:**
-
-- Not required
-
-**Headers:**
-
-```http
-Content-Type: application/json
-```
-
-**Request body:**
-
-```json
-{
-  "name": "Alice",
-  "email": "alice@example.com",
-  "password": "password123"
-}
-```
-
-**Validation rules:**
-
-- `name`: required, minimum 3 characters
-- `email`: required, must be a valid email (`z.email()`)
-- `password`: required, minimum 8 characters, maximum 32 characters
-
-**Success response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "66f3a1c1d5ef4e2a91234567",
-    "name": "Alice",
-    "email": "alice@example.com",
-    "createdAt": "2026-01-01T00:00:00.000Z",
-    "updatedAt": "2026-01-01T00:00:00.000Z"
-  }
-}
-```
-
-**Notes:**
-
-- `phone`, `role`, and other fields do not exist in the schema.
-- Duplicate emails return a conflict error.
-
-**Error responses:**
-
-- `400 Bad Request` for validation failures
-- `409 Conflict` if the email already exists
-- `500 Internal Server Error` for unexpected errors
-
-**Example cURL:**
-
-```bash
-curl -X POST http://localhost:3000/users/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Alice",
-    "email": "alice@example.com",
-    "password": "password123"
-  }'
-```
-
----
-
-#### `POST /users/login`
-
-**Description:**
-
-Logs in a user using email and password. If valid, the server creates a JWT and stores it in an HTTP-only cookie called `ACCESS_TOKEN`.
-
-**Authentication:**
-
-- Not required
-
-**Headers:**
-
-```http
-Content-Type: application/json
-```
-
-**Request body:**
-
-```json
-{
-  "email": "alice@example.com",
-  "password": "password123"
-}
-```
-
-**Validation rules:**
-
-- `email`: required, valid email
-- `password`: required, minimum 8 characters, maximum 32 characters
-
-**Success response:**
-
-```json
-{
-  "success": true,
-  "message": "Logged in successfully",
-  "data": {
-    "id": "66f3a1c1d5ef4e2a91234567",
-    "name": "Alice",
-    "email": "alice@example.com",
-    "createdAt": "2026-01-01T00:00:00.000Z",
-    "updatedAt": "2026-01-01T00:00:00.000Z"
-  }
-}
-```
-
-**Important implementation detail:**
-
-- The JWT is not returned in the JSON response body.
-- It is set as the cookie `ACCESS_TOKEN` with `httpOnly: true` and `maxAge` of 7 days.
-- The code does not implement refresh tokens or a logout route.
-
-**Error responses:**
-
-- `400 Bad Request` for validation issues
-- `401 Unauthorized` for invalid credentials or invalid token
-- `500 Internal Server Error` for unexpected errors
-
-**Example cURL:**
-
-```bash
-curl -X POST http://localhost:3000/users/login \
-  -H "Content-Type: application/json" \
-  -c cookies.txt \
-  -d '{
-    "email": "alice@example.com",
-    "password": "password123"
-  }'
-```
-
----
-
-#### `GET /users/me`
-
-**Description:**
-
-Returns the authenticated user profile.
-
-**Authentication:**
-
-- Required
-- Mechanism: JWT in the `ACCESS_TOKEN` cookie
-
-**Headers:**
-
-```http
-Cookie: ACCESS_TOKEN=<jwt>
-```
-
-**Path parameters:**
-
-```text
-None
-```
-
-**Query parameters:**
-
-```text
-None
-```
-
-**Success response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "66f3a1c1d5ef4e2a91234567",
-    "name": "Alice",
-    "email": "alice@example.com",
-    "householdId": "66f3a1c1d5ef4e2a91234568",
-    "createdAt": "2026-01-01T00:00:00.000Z",
-    "updatedAt": "2026-01-01T00:00:00.000Z"
-  }
-}
-```
-
-**Error responses:**
-
-- `401 Unauthorized` if the token is invalid, missing, or expired
-- `404 Not Found` if the user no longer exists
-- `500 Internal Server Error` for unexpected issues
-
-**Example cURL:**
-
-```bash
-curl -X GET http://localhost:3000/users/me \
-  -b cookies.txt
-```
-
----
-
-### Households
-
-The household routes are mounted with `app.use(authenticateUser, householdRouter)`, so every household endpoint requires the `ACCESS_TOKEN` cookie to be valid.
-
-#### `POST /households`
-
-**Description:**
-
-Creates a new household and assigns the authenticated user as a member.
-
-**Authentication:**
-
-- Required
-- Mechanism: JWT in the `ACCESS_TOKEN` cookie
-
-**Headers:**
-
-```http
-Content-Type: application/json
-Cookie: ACCESS_TOKEN=<jwt>
-```
-
-**Request body:**
-
-```json
-{
-  "name": "Smith Household"
-}
-```
-
-**Validation rules:**
-
-- `name`: required, minimum 5 characters
-
-**Success response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "66f3a1c1d5ef4e2a91234569",
-    "name": "Smith Household",
-    "inviteCode": "34d0dfe6-90e0-401a-b624-fecf00fd9d20",
-    "createdAt": "2026-01-01T00:00:00.000Z",
-    "updatedAt": "2026-01-01T00:00:00.000Z"
-  }
-}
-```
-
-**Error responses:**
-
-- `400 Bad Request` for validation failures
-- `401 Unauthorized` if the token is missing or invalid
-- `500 Internal Server Error` for unexpected errors
-
-**Example cURL:**
-
-```bash
-curl -X POST http://localhost:3000/households \
-  -H "Content-Type: application/json" \
-  -b cookies.txt \
-  -d '{
-    "name": "Smith Household"
-  }'
-```
-
----
-
-#### `GET /households/:householdId`
-
-**Description:**
-
-Retrieves a household by its MongoDB ObjectId.
-
-**Authentication:**
-
-- Required
-
-**Headers:**
-
-```http
-Cookie: ACCESS_TOKEN=<jwt>
-```
-
-**Path parameters:**
-
-| Parameter | Type | Required | Description |
-| --- | --- | --- | --- |
-| `householdId` | `string` | Yes | MongoDB ObjectId of the household |
-
-**Success response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "66f3a1c1d5ef4e2a91234569",
-    "name": "Smith Household",
-    "inviteCode": "34d0dfe6-90e0-401a-b624-fecf00fd9d20",
-    "createdAt": "2026-01-01T00:00:00.000Z",
-    "updatedAt": "2026-01-01T00:00:00.000Z"
-  }
-}
-```
-
-**Error responses:**
-
-- `401 Unauthorized` if the token is invalid
-- `404 Not Found` if the household does not exist
-- `500 Internal Server Error` for unexpected errors
-
-**Example cURL:**
-
-```bash
-curl -X GET http://localhost:3000/households/66f3a1c1d5ef4e2a91234569 \
-  -b cookies.txt
-```
-
----
-
-#### `GET /households/:householdId/members`
-
-**Description:**
-
-Returns a household record together with its members list.
-
-**Authentication:**
-
-- Required
-
-**Headers:**
-
-```http
-Cookie: ACCESS_TOKEN=<jwt>
-```
-
-**Path parameters:**
-
-| Parameter | Type | Required | Description |
-| --- | --- | --- | --- |
-| `householdId` | `string` | Yes | Household MongoDB ObjectId |
-
-**Success response shape:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "detail": {
-      "id": "66f3a1c1d5ef4e2a91234569",
-      "name": "Smith Household",
-      "inviteCode": "34d0dfe6-90e0-401a-b624-fecf00fd9d20",
-      "createdAt": "2026-01-01T00:00:00.000Z",
-      "updatedAt": "2026-01-01T00:00:00.000Z"
-    },
-    "members": [
-      {
-        "id": "66f3a1c1d5ef4e2a91234567",
-        "name": "Alice",
-        "email": "alice@example.com",
-        "createdAt": "2026-01-01T00:00:00.000Z",
-        "updatedAt": "2026-01-01T00:00:00.000Z"
-      }
-    ]
-  }
-}
-```
-
-**Error responses:**
-
-- `401 Unauthorized` if the token is invalid
-- `404 Not Found` if the household does not exist
-- `500 Internal Server Error` for unexpected errors
-
-**Example cURL:**
-
-```bash
-curl -X GET http://localhost:3000/households/66f3a1c1d5ef4e2a91234569/members \
-  -b cookies.txt
-```
-
----
-
-#### `POST /households/join`
-
-**Description:**
-
-Adds the authenticated user to a household using the household invite code.
-
-**Authentication:**
-
-- Required
-
-**Headers:**
-
-```http
-Cookie: ACCESS_TOKEN=<jwt>
-```
-
-**Query parameters:**
-
-| Parameter | Type | Required | Description |
-| --- | --- | --- | --- |
-| `inviteCode` | `string` | Yes | The household invite code |
-
-**Example request:**
-
-```bash
-curl -X POST "http://localhost:3000/households/join?inviteCode=34d0dfe6-90e0-401a-b624-fecf00fd9d20" \
-  -b cookies.txt
-```
-
-**Success response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "detail": {
-      "id": "66f3a1c1d5ef4e2a91234569",
-      "name": "Smith Household",
-      "inviteCode": "34d0dfe6-90e0-401a-b624-fecf00fd9d20",
-      "createdAt": "2026-01-01T00:00:00.000Z",
-      "updatedAt": "2026-01-01T00:00:00.000Z"
-    },
-    "members": [
-      {
-        "id": "66f3a1c1d5ef4e2a91234567",
-        "name": "Alice",
-        "email": "alice@example.com",
-        "createdAt": "2026-01-01T00:00:00.000Z",
-        "updatedAt": "2026-01-01T00:00:00.000Z"
-      }
-    ]
-  }
-}
-```
-
-**Error responses:**
-
-- `401 Unauthorized` if the token is missing or invalid
-- `404 Not Found` if the invite code does not match a household
-- `500 Internal Server Error` for unexpected errors
-
----
-
-#### `DELETE /households/:householdId/members`
-
-**Description:**
-
-Removes the authenticated user from the specified household.
-
-**Authentication:**
-
-- Required
-
-**Headers:**
-
-```http
-Cookie: ACCESS_TOKEN=<jwt>
-```
-
-**Path parameters:**
-
-| Parameter | Type | Required | Description |
-| --- | --- | --- | --- |
-| `householdId` | `string` | Yes | Household MongoDB ObjectId |
-
-**Success response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "66f3a1c1d5ef4e2a91234569",
-    "name": "Smith Household",
-    "inviteCode": "34d0dfe6-90e0-401a-b624-fecf00fd9d20",
-    "createdAt": "2026-01-01T00:00:00.000Z",
-    "updatedAt": "2026-01-01T00:00:00.000Z"
-  }
-}
-```
-
-**Error responses:**
-
-- `401 Unauthorized` if the JWT is invalid
-- `404 Not Found` if the household does not exist
-- `409 Conflict` if the current user is not a member of the household
-- `500 Internal Server Error` for unexpected errors
-
-**Example cURL:**
-
-```bash
-curl -X DELETE http://localhost:3000/households/66f3a1c1d5ef4e2a91234569/members \
-  -b cookies.txt
-```
-
-## 10. Complete API Route Table
-
-| Method | Endpoint | Authentication | Description |
-| --- | --- | --- | --- |
-| `GET` | `/` | No | Returns a hello-world response |
-| `POST` | `/users/register` | No | Register a new user |
-| `POST` | `/users/login` | No | Authenticate and set `ACCESS_TOKEN` cookie |
-| `GET` | `/users/me` | Yes | Get the current authenticated user |
-| `POST` | `/households` | Yes | Create a household |
-| `GET` | `/households/:householdId` | Yes | Get household by ID |
-| `GET` | `/households/:householdId/members` | Yes | Get household and member list |
-| `POST` | `/households/join` | Yes | Join a household using `inviteCode` query param |
-| `DELETE` | `/households/:householdId/members` | Yes | Remove the current authenticated user from a household |
-
-## 11. Authentication & Authorization
-
-### How authentication works
-
-1. The user calls `POST /users/login` with `email` and `password`.
-2. The service checks the email and compares the password with the stored bcrypt hash.
-3. If valid, `generateAccessToken()` signs a JWT payload containing:
-   - `id`
-   - `email`
-4. The JWT is stored in the `ACCESS_TOKEN` cookie using `res.cookie("ACCESS_TOKEN", result.token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 })`.
-5. Subsequent requests call `authenticateUser`, which reads `req.cookies.ACCESS_TOKEN` and runs `verifyAccessToken(token)`.
-6. If verification succeeds, it assigns:
-   - `req.userId`
-   - `req.userEmail`
-7. The route handler proceeds.
-
-### JWT details
-
-The implementation uses:
-
-- algorithm: default `jsonwebtoken` HS256 signing
-- secret: `JWT_SECRET`
-- expiration: `7Days`
-
-No refresh token, logout endpoint, or password reset flow is currently implemented.
-
-### Authorization behavior
-
-- There is no role system in the code.
-- There is no explicit permission middleware.
-- Access control is implemented at the route level by applying `authenticateUser` before household routes.
-- Authorization is effectively: valid JWT required to access household endpoints.
-
-## 12. Middleware
-
-### `requestContextMiddleware`
-
-**Purpose:**
-
-Generates a per-request UUID and stores it in `AsyncLocalStorage`. The UUID is sent in the response header `X-Request_Id`.
-
-**Where applied:**
-
-- In `src/app.ts` before all other middleware and routes
-
-**Behavior on failure:**
-
-- None; it always calls `next()` after storing the request context
-
----
-
-### `requestLoggerMiddleware`
-
-**Purpose:**
-
-Logs request start and completion timings using Winston.
-
-**Where applied:**
-
-- In `src/app.ts` after request context middleware
-
-**What it logs:**
-
-- HTTP method
-- original URL
-- status code
-- request duration in milliseconds
-
-**Behavior on failure:**
-
-- Does not block the request; it logs and then continues
-
----
-
-### `authenticateUser`
-
-**Purpose:**
-
-Validates the JWT from the `ACCESS_TOKEN` cookie and injects `req.userId` and `req.userEmail`.
-
-**Where applied:**
-
-- On all household routes via `app.use(authenticateUser, householdRouter)`
-- On `GET /users/me`
-
-**What it checks:**
-
-- cookie exists: `req.cookies.ACCESS_TOKEN`
-- JWT signature and expiration via `verifyAccessToken`
-
-**Behavior on failure:**
-
-- Throws `AppError("Invalid Token", 401, "UNAUTHORIZED")`
-- The global error handler returns a structured JSON error response
-
----
-
-### `userRegisterValidator`
-
-**Purpose:**
-
-Validates `POST /users/register` input using `registerUserSchema`.
-
-**Where applied:**
-
-- `userRouter.post('/users/register', userRegisterValidator, registerUser)`
-
-**Behavior on failure:**
-
-- Passes Zod validation errors to the global error handler
-
----
-
-### `userLoginValidator`
-
-**Purpose:**
-
-Validates `POST /users/login` input using `loginUserSchema`.
-
-**Where applied:**
-
-- `userRouter.post('/users/login', userLoginValidator, loginUser)`
-
----
-
-### `createHouseholdValidator`
-
-**Purpose:**
-
-Validates `POST /households` input using `createHouseholdSchema`.
-
-**Where applied:**
-
-- `householdRouter.post('/households', createHouseholdValidator, householdController.create)`
-
----
-
-### Error handler
-
-**Purpose:**
-
-Catches Zod validation errors, `AppError` instances, and unexpected exceptions and returns a consistent JSON error payload.
-
-**Where applied:**
-
-- `app.use(errorHandler)` at the end of `src/app.ts`
-
-**Response format:**
-
-```json
-{
-  "success": false,
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Request Validation Failed",
-    "details": [
-      {
-        "path": "email",
-        "message": "Invalid email",
-        "code": "invalid_format"
-      }
-    ]
-  },
-  "meta": {
-    "requestId": "<uuid>"
-  }
-}
-```
-
-## 13. Validation
-
-Validation is implemented with Zod in the `src/validation/` directory and enforced by middleware functions in `src/middleware/validator.middleware.ts`.
-
-### `registerUserSchema`
-
-```ts
-z.object({
-  name: z.string().min(3, "Name should be at least 3 characters"),
-  email: z.email(),
-  password: z.string().min(8, "Password should have at least 8 characters").max(32, "Password should be at max 32 characters")
-})
-```
-
-Rules:
-
-- `name`: required, minimum 3 characters
-- `email`: required, must be a valid email
-- `password`: required, 8-32 characters
-
-### `loginUserSchema`
-
-```ts
-z.object({
-  email: z.email(),
-  password: z.string().min(8, "Password should be at least 8 characters").max(32, "Password should be at max 32 characters")
-})
-```
-
-Rules:
-
-- `email`: required, valid email
-- `password`: required, 8-32 characters
-
-### `createHouseholdSchema`
-
-```ts
-z.object({
-  name: z.string().min(5, "Household name must be at least of 5 characters")
-})
-```
-
-Rules:
-
-- `name`: required, minimum 5 characters
-
-### Validation behavior
-
-- Zod errors are passed into `next(error)`.
-- Global `errorHandler` converts them into HTTP `400 Bad Request` responses.
-- No custom validation middleware for query params or headers beyond the route-level schemas above.
-
-## 14. Error Handling
-
-### Custom errors
-
-The project defines:
-
-- `AppError` in `src/core/errors/AppError.ts`
-- `ERROR_CODES` in `src/core/errors/errorCodes.ts`
-- HTTP status constants in `src/core/http/httpStatus.ts`
-
-`AppError` carries:
-
-- `message`
-- `statusCode`
-- `code`
-- `isOperational`
-- optional `details`
-
-### Error response format
-
-The application consistently returns JSON shaped like:
-
-```json
-{
-  "success": false,
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Request Validation Failed",
-    "details": [
-      {
-        "path": "email",
-        "message": "Invalid email",
-        "code": "invalid_format"
-      }
-    ]
-  },
-  "meta": {
-    "requestId": "<uuid>"
-  }
-}
-```
-
-### Error codes used in the application
-
-| Code | Meaning |
-| --- | --- |
-| `UNAUTHORIZED` | Generic unauthorized state |
-| `FORBIDDEN` | Not used in current routes |
-| `INVALID_CREDENTIALS` | Invalid email/password |
-| `USER_NOT_FOUND` | User not found |
-| `HOUSEHOLD_NOT_FOUND` | Household not found |
-| `VALIDATION_ERROR` | Zod validation failure |
-| `INVALID_ACCESS_TOKEN` | Defined but not actively used in the current code |
-| `USER_ALREADY_EXISTS` | Duplicate email during registration |
-| `USER_DOES_NOT_EXISTS` | User is not a member of a household |
-| `INTERNAL_SERVER_ERROR` | Unexpected exception |
-
-### HTTP status codes actually used
-
-| Status | Meaning | Implementation use |
-| --- | --- | --- |
-| `200` | OK | successful reads and login |
-| `201` | Created | successful user registration and household creation |
-| `400` | Bad Request | invalid request validation |
-| `401` | Unauthorized | invalid or missing token / invalid credentials |
-| `404` | Not Found | user or household missing |
-| `409` | Conflict | duplicate email or user already/ not in household |
-| `500` | Internal Server Error | unexpected server failures |
-
-## 15. Logging
-
-The project uses Winston with a JSON formatter.
-
-### Logger configuration
-
-Defined in `src/config/logger.ts`:
-
-- level: `debug` in development, `info` in other environments
-- output: console transport only
-- metadata: request ID, timestamp, stack traces, and JSON structure
-
-### Logged actions
-
-- request started
-- request completed
-- validation error details
-- operation error details
-- unexpected exceptions
-
-### Logging behavior
-
-```json
-{
-  "level": "info",
-  "timestamp": "...",
-  "message": "Request Started",
-  "method": "GET",
-  "path": "/users/me",
-  "requestId": "..."
-}
-```
-
-The code does not include log file rotation, external log aggregation, or masking intentionally. It also does not log raw passwords or tokens.
-
-## 16. Database Models
-
-### Model: `user`
-
-| Field | Type | Required | Unique | Description |
-| --- | --- | --- | --- | --- |
-| `id` | `String` | Yes | Yes | MongoDB object ID |
-| `email` | `String` | Yes | Yes | User email |
-| `name` | `String` | Yes | No | User name |
-| `hashPassword` | `String` | Yes | No | Bcrypt password hash |
-| `householdId` | `String?` | No | No | Household association |
-| `createdAt` | `DateTime` | Yes | No | Created timestamp |
-| `updatedAt` | `DateTime` | Yes | No | Updated timestamp |
-
-### Model: `household`
-
-| Field | Type | Required | Unique | Description |
-| --- | --- | --- | --- | --- |
-| `id` | `String` | Yes | Yes | MongoDB object ID |
-| `name` | `String` | Yes | No | Household name |
-| `inviteCode` | `String` | Yes | Yes | Unique invite code |
-| `itemId` | `String[]` | No | No | Related item IDs |
-| `createdAt` | `DateTime` | Yes | No | Created timestamp |
-| `updatedAt` | `DateTime` | Yes | No | Updated timestamp |
-
-### Model: `item`
-
-| Field | Type | Required | Unique | Description |
-| --- | --- | --- | --- | --- |
-| `id` | `String` | Yes | Yes | MongoDB object ID |
-| `name` | `String` | Yes | No | Item name |
-| `quantity` | `Int` | Yes | No | Item quantity |
-| `expiry` | `DateTime` | Yes | No | Expiry timestamp |
-| `householdId` | `String[]` | No | No | Related household IDs |
-| `createdAt` | `DateTime` | Yes | No | Created timestamp |
-| `updatedAt` | `DateTime` | Yes | No | Updated timestamp |
-
-### Important relationships
-
-- `user.householdId` references `household.id`
-- `household.members` is the inverse relation to `user`
-- `household.itemId` references `item.id`
-- `item.householdId` references `household.id`
-
-## 17. Security
-
-### Implemented security features
-
-- Password hashing via `bcrypt` with `SALT_ROUNDS = 12`
-- JWT-based authentication with `JWT_SECRET`
-- HTTP-only JWT cookie to reduce client-side script access
-- Input validation with Zod before business logic runs
-- Custom `AppError` handling to return structured responses without leaking stack traces in production
-- Environment variable enforcement through `zod` parsing in `src/config/env.ts`
-
-### Not implemented in the codebase
-
-The following security features were not found in the codebase and should not be described as implemented:
-
-- CORS configuration
-- Helmet security headers
-- rate limiting
-- CSRF protection
-- refresh tokens
-- role-based access control
-- API key auth
-- database encryption-at-rest configuration
-- request sanitization beyond Zod validation
-
-### Security recommendations
-
-These are recommended improvements, not existing features:
-
-- add CORS policy configuration if web clients will call this API from a different origin
-- add Helmet to set HTTP security headers
-- add rate limiting for login and public endpoints
-- add refresh token support if long-lived sessions are required
-- add dedicated authorization roles if household permissions are added later
-- add database backups and environment-specific secret management
-- add a `.env.example` file to document required environment variables for developers
-
-## 18. API Request Flow
-
-The current request lifecycle is:
-
-```text
-Client
-  ↓
-Express route
-  ↓
-Validation middleware (if applicable)
-  ↓
-Authentication middleware (for protected routes)
-  ↓
-Controller
-  ↓
-Service
-  ↓
-Repository
-  ↓
-Prisma / MongoDB
-  ↓
-Service response transformation (DTO)
-  ↓
-Controller response
-  ↓
-Global error handler (if any error occurs)
-```
-
-Example flow for `GET /users/me`:
-
-```text
-Client
-  ↓
-GET /users/me
-  ↓
-authenticateUser
-  ↓
-reads cookie ACCESS_TOKEN
-  ↓
-verifyAccessToken
-  ↓
-req.userId set
-  ↓
-userController.getMe
-  ↓
-userService.getMe
-  ↓
-userRepo.getUserById
-  ↓
-Prisma query to MongoDB
-  ↓
-toUserResponseDto
-  ↓
-JSON response with success: true
-```
-
-## 19. Testing
-
-No test framework or test files were found in the backend repository.
-
-Evidence from the codebase:
-
-- no `jest`, `vitest`, `mocha`, or `supertest` dependencies in `package.json`
-- no `test` script in `package.json`
-- no `.spec.*` or `.test.*` files in the backend source tree
-
-Current status: `Not implemented`.
-
-## 20. Available npm Scripts
-
-From `backend/package.json`:
-
-| Command | Description |
-| --- | --- |
-| `npm run build` | Runs `npx tsc` to compile TypeScript to `dist` |
-| `npm start` | Starts the built app from `./dist/server.js` |
-| `npm run dev` | Starts the development server with `tsx watch ./src/server.ts` |
-| `npm install` | installs project dependencies |
-| `npm run postinstall` | Runs `prisma skills sync || exit 0` after install |
-
-There is no `npm test` script in the current project.
-
-## 21. Docker
-
-No Docker configuration exists in this backend repository.
-
-The codebase does not contain:
-
-- `Dockerfile`
-- `docker-compose.yml`
-- `docker-compose.yaml`
-- `.dockerignore`
-
-Therefore, this section is not applicable to the current implementation.
-
-## 22. API Usage Examples
-
-### Registration → login → profile lookup
-
-```bash
-curl -X POST http://localhost:3000/users/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Alice",
-    "email": "alice@example.com",
-    "password": "password123"
-  }'
-
-curl -X POST http://localhost:3000/users/login \
-  -H "Content-Type: application/json" \
-  -c cookies.txt \
-  -d '{
-    "email": "alice@example.com",
-    "password": "password123"
-  }'
-
-curl -X GET http://localhost:3000/users/me \
-  -b cookies.txt
-```
-
-### Create household → fetch household → join household with invite code
-
-```bash
-curl -X POST http://localhost:3000/households \
-  -H "Content-Type: application/json" \
-  -b cookies.txt \
-  -d '{
-    "name": "Smith Household"
-  }'
-
-curl -X GET http://localhost:3000/households/66f3a1c1d5ef4e2a91234569 \
-  -b cookies.txt
-
-curl -X POST "http://localhost:3000/households/join?inviteCode=34d0dfe6-90e0-401a-b624-fecf00fd9d20" \
-  -b cookies.txt
-```
-
-## 23. HTTP Status Codes
-
-| Status | Meaning | When used |
-| --- | --- | --- |
-| `200` | OK | successful GET requests, successful login, successful household join and delete |
-| `201` | Created | successful registration and household creation |
-| `400` | Bad Request | validation errors from Zod |
-| `401` | Unauthorized | invalid or missing JWT / invalid credentials |
-| `404` | Not Found | user or household not found |
-| `409` | Conflict | duplicate email or membership conflict |
-| `500` | Internal Server Error | unexpected exception |
-
-## 24. Deployment
-
-This project is not configured for a specific cloud deployment system in the repository. The backend can be deployed to any Node.js host that supports Express and MongoDB.
-
-### Generic deployment checklist
-
-1. Set environment variables for production:
-   - `PORT`
-   - `NODE_ENV=production`
-   - `DATABASE_URL`
-   - `JWT_SECRET`
-2. Ensure the MongoDB instance is reachable from the deployment environment.
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
-4. Generate Prisma client:
-   ```bash
-   npx prisma generate
-   ```
-5. Build the app:
-   ```bash
-   npm run build
-   ```
-6. Start the app:
-   ```bash
-   npm start
-   ```
-7. Expose the service on a host or process manager that manages Node.js in production.
-8. Add a production-safe CORS configuration if the API is accessed cross-origin.
-
-### Important deployment note
-
-The code never requires a reverse proxy, load balancer, or Docker setup; these are not implemented in the repo.
-
-## 25. API Client / Postman
-
-No Postman collection or exported API documentation file was found in the repository.
-
-Developers can use the documented endpoints above with `curl`, or any HTTP client such as Postman, Insomnia, or a browser-based client, by following the same route definitions and cookie-based authentication pattern.
-
-## 26. Troubleshooting
-
-### Database connection failure
-
-Symptoms:
-
-- Prisma queries fail at runtime
-- application crashes during database access
-
-Checks:
-
-- confirm `DATABASE_URL` is set correctly
-- confirm MongoDB is reachable from the server
-- run `npx prisma generate` after changing the schema or environment
-
----
-
-### Missing environment variables
-
-Symptoms:
-
-- app exits immediately during startup with `Invalid Environment Variable`
-
-Cause:
-
-- required variables are missing from the environment
-
-Fix:
-
-- ensure `DATABASE_URL` and `JWT_SECRET` are defined
-- ensure `PORT` or `NODE_ENV` are set if needed
-
----
-
-### Port already in use
-
-Symptoms:
-
-- Express server fails to bind to the port
-
-Fix:
-
-- stop the conflicting process
-- or change `PORT` in the environment
-
----
-
-### Prisma generation problems
-
-Symptoms:
-
-- errors around generated client or schema mismatch
-
-Fix:
-
-```bash
-npx prisma generate
-```
-
-If the database is not reachable, ensure the connection string is valid and the MongoDB service is up.
-
----
-
-### Authentication errors
-
-Symptoms:
-
-- `401 Unauthorized` on protected routes
-
-Cause:
-
-- invalid or expired JWT
-- missing cookie `ACCESS_TOKEN`
-- secret mismatch
-
-Fix:
-
-- log in again to refresh the cookie
-- ensure the frontend sends the cookie with each request
-- verify `JWT_SECRET` matches between environments
-
----
-
-### CORS issues
-
-The project currently does not implement any CORS configuration. If a browser client is running on a different origin, it may fail due to cross-origin policies.
-
-## 27. Development Guidelines
-
-These conventions are inferred from the current code structure:
-
-- keep route definitions in `src/routes/`
-- keep HTTP handlers in `src/controller/`
-- keep business logic in `src/services/`
-- keep data access in `src/repo/`
-- validate input with Zod in `src/validation/`
-- transform database data to API DTOs in `src/dto/`
-- use `AppError` for known application errors instead of throwing raw `Error`
-- return consistent JSON response objects with `success`, `data`, and `error` shapes
-- keep authentication and request-scoped metadata in middleware rather than controller logic
-
-### Adding a new route
-
-1. define the route in the relevant file under `src/routes/`
-2. create or update a controller method in `src/controller/`
-3. add the business logic in `src/services/`
-4. add repository access if needed in `src/repo/`
-5. add request validation in `src/validation/`
-6. register the middleware and handler in the route definition
-7. ensure the global error handler can convert errors appropriately
-
-### Adding a new model
-
-1. update `prisma/schema.prisma`
-2. run Prisma generation and schema sync commands
-3. add repository methods in `src/repo/`
-4. add DTO transformations in `src/dto/`
-5. add service logic and route handlers using the same layered pattern already in the project
-
-## 28. Future Improvements
-
-These are recommended improvements based on obvious gaps in the implementation, not features already present:
-
-- add a logout endpoint to clear `ACCESS_TOKEN`
-- add a refresh token strategy
-- add request-level rate limiting
-- add CORS support if external clients will call the API
-- add role/permission checks for household access
-- add Prisma migration workflow and database seeding
-- add tests for auth flows and household operations
-- add item CRUD endpoints if inventory tracking is intended to be fully implemented
-- add explicit API versioning if the backend is expanded
-
-## Final verification checklist
-
-Before writing this document, the implementation was audited against the codebase to confirm the following:
-
-1. All route files were inspected: `src/routes/user.route.ts` and `src/routes/household.route.ts`
-2. All implemented routes were documented
-3. All HTTP methods were checked against the code
-4. Path names were verified from the route definitions
-5. Authentication requirements were verified from the middleware and route registration
-6. Request bodies were checked against Zod schemas
-7. Error handling matches `src/core/errors/ErrorHandler.ts`
-8. Environment variables match `src/config/env.ts`
-9. npm scripts were checked against `package.json`
-10. Database model details match `prisma/schema.prisma`
-11. Middleware behavior matches the actual implementation
-12. No real secrets were included in this README
-13. No functionality was invented beyond the current code
-
-## Notes for developers
-
-This backend is a compact Express + Prisma API with user and household management. It is currently functional for registration, login, profile lookup, and household membership management, but it does not yet include the broader inventory, product, task, or admin features that are commonly associated with a larger household app. The code is built around a simple layered architecture and is suitable as a starting point for further API expansion.
+- Authentication is cookie-based JWT authentication.
+- The current data model supports one household per user through `user.householdId`.
+- Household and item access checks are implemented in the service/repository layer; role-based household permissions are not modeled.
+- There are currently no automated tests, migrations, seed command, or OpenAPI specification in this backend package.
