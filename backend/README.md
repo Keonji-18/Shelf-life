@@ -125,11 +125,27 @@ The login cookie is configured with a seven-day lifetime. Clients must preserve 
 
 All request bodies are JSON. Unless stated otherwise, authenticated endpoints require a valid `ACCESS_TOKEN` cookie.
 
+### Root
+
+#### `GET /`
+
+Health check endpoint for the server.
+
+Example response:
+
+```json
+{
+  "message": "Hello World"
+}
+```
+
 ### Users
 
 #### `POST /users/register`
 
 Creates a user. The name must contain at least 3 characters, the password must be 8-32 characters, and the email must be valid.
+
+Request body:
 
 ```json
 {
@@ -139,9 +155,26 @@ Creates a user. The name must contain at least 3 characters, the password must b
 }
 ```
 
+Example success response (`201 Created`):
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "64f1f3c7c6b0d8e4f1b9a123",
+    "name": "Jane Doe",
+    "email": "jane@example.com",
+    "createdAt": "2026-09-29T10:15:00.000Z",
+    "updatedAt": "2026-09-29T10:15:00.000Z"
+  }
+}
+```
+
 #### `POST /users/login`
 
 Authenticates a user and sets the `ACCESS_TOKEN` cookie.
+
+Request body:
 
 ```json
 {
@@ -150,13 +183,60 @@ Authenticates a user and sets the `ACCESS_TOKEN` cookie.
 }
 ```
 
+Example success response (`200 OK`):
+
+```json
+{
+  "success": true,
+  "message": "Logged in successfully",
+  "data": {
+    "id": "64f1f3c7c6b0d8e4f1b9a123",
+    "name": "Jane Doe",
+    "email": "jane@example.com",
+    "createdAt": "2026-09-29T10:15:00.000Z",
+    "updatedAt": "2026-09-29T10:15:00.000Z"
+  }
+}
+```
+
+Set-Cookie header example:
+
+```http
+Set-Cookie: ACCESS_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; HttpOnly; Max-Age=604800
+```
+
 #### `POST /users/logout`
 
 Clears the authentication cookie.
 
+Example success response (`200 OK`):
+
+```json
+{
+  "success": true,
+  "message": "Logged out successfully"
+}
+```
+
 #### `GET /users/me`
 
 Returns the authenticated user without the stored password hash.
+
+Example success response (`200 OK`):
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "64f1f3c7c6b0d8e4f1b9a123",
+    "name": "Jane Doe",
+    "email": "jane@example.com",
+    "householdId": "64f1f3d3c6b0d8e4f1b9a456",
+    "createdAt": "2026-09-29T10:15:00.000Z",
+    "updatedAt": "2026-09-29T10:15:00.000Z"
+  }
+}
+```
 
 ### Households
 
@@ -164,9 +244,26 @@ Returns the authenticated user without the stored password hash.
 
 Creates a household for the authenticated user. The name must contain at least 5 characters.
 
+Request body:
+
 ```json
 {
   "name": "Kitchen Inventory"
+}
+```
+
+Example success response (`201 Created`):
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "64f1f3d3c6b0d8e4f1b9a456",
+    "name": "Kitchen Inventory",
+    "inviteCode": "6c5f5ea0-b48b-4d17-91d1-cf0ddc13db7b",
+    "createdAt": "2026-09-29T10:16:00.000Z",
+    "updatedAt": "2026-09-29T10:16:00.000Z"
+  }
 }
 ```
 
@@ -174,21 +271,140 @@ Creates a household for the authenticated user. The name must contain at least 5
 
 Returns the household and its stored item ID references.
 
+Example success response (`200 OK`):
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "64f1f3d3c6b0d8e4f1b9a456",
+    "name": "Kitchen Inventory",
+    "inviteCode": "6c5f5ea0-b48b-4d17-91d1-cf0ddc13db7b",
+    "items": [
+      "64f1f3e6c6b0d8e4f1b9a789"
+    ],
+    "createdAt": "2026-09-29T10:16:00.000Z",
+    "updatedAt": "2026-09-29T10:16:00.000Z"
+  }
+}
+```
+
 #### `GET /households/:householdId/details`
 
 Returns the household with its members and inventory.
+
+Example success response (`200 OK`):
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "64f1f3d3c6b0d8e4f1b9a456",
+    "name": "Kitchen Inventory",
+    "inviteCode": "6c5f5ea0-b48b-4d17-91d1-cf0ddc13db7b",
+    "members": [
+      {
+        "id": "64f1f3c7c6b0d8e4f1b9a123",
+        "name": "Jane Doe",
+        "email": "jane@example.com",
+        "householdId": "64f1f3d3c6b0d8e4f1b9a456",
+        "createdAt": "2026-09-29T10:15:00.000Z",
+        "updatedAt": "2026-09-29T10:15:00.000Z"
+      }
+    ],
+    "inventory": [
+      {
+        "id": "64f1f3e6c6b0d8e4f1b9a789",
+        "name": "Milk",
+        "barcode": "123456789012",
+        "expiry": "2026-10-15T00:00:00.000Z",
+        "householdId": ["64f1f3d3c6b0d8e4f1b9a456"],
+        "createdAt": "2026-09-29T10:18:00.000Z",
+        "updatedAt": "2026-09-29T10:18:00.000Z"
+      }
+    ],
+    "createdAt": "2026-09-29T10:16:00.000Z",
+    "updatedAt": "2026-09-29T10:16:00.000Z"
+  }
+}
+```
 
 #### `GET /households/:householdId/members`
 
 Returns the household members.
 
+Example success response (`200 OK`):
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "64f1f3d3c6b0d8e4f1b9a456",
+    "name": "Kitchen Inventory",
+    "inviteCode": "6c5f5ea0-b48b-4d17-91d1-cf0ddc13db7b",
+    "members": [
+      {
+        "id": "64f1f3c7c6b0d8e4f1b9a123",
+        "name": "Jane Doe",
+        "email": "jane@example.com",
+        "householdId": "64f1f3d3c6b0d8e4f1b9a456",
+        "createdAt": "2026-09-29T10:15:00.000Z",
+        "updatedAt": "2026-09-29T10:15:00.000Z"
+      }
+    ],
+    "createdAt": "2026-09-29T10:16:00.000Z",
+    "updatedAt": "2026-09-29T10:16:00.000Z"
+  }
+}
+```
+
 #### `POST /households/join?inviteCode=<invite-code>`
 
 Joins the household identified by the `inviteCode` query parameter. This endpoint does not expect a request body.
 
+Example success response (`200 OK`):
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "64f1f3d3c6b0d8e4f1b9a456",
+    "name": "Kitchen Inventory",
+    "inviteCode": "6c5f5ea0-b48b-4d17-91d1-cf0ddc13db7b",
+    "members": [
+      {
+        "id": "64f1f3c7c6b0d8e4f1b9a123",
+        "name": "Jane Doe",
+        "email": "jane@example.com",
+        "householdId": "64f1f3d3c6b0d8e4f1b9a456",
+        "createdAt": "2026-09-29T10:15:00.000Z",
+        "updatedAt": "2026-09-29T10:15:00.000Z"
+      }
+    ],
+    "createdAt": "2026-09-29T10:16:00.000Z",
+    "updatedAt": "2026-09-29T10:16:00.000Z"
+  }
+}
+```
+
 #### `DELETE /households/:householdId/members`
 
 Removes the authenticated user from the household.
+
+Example success response (`200 OK`):
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "64f1f3d3c6b0d8e4f1b9a456",
+    "name": "Kitchen Inventory",
+    "inviteCode": "6c5f5ea0-b48b-4d17-91d1-cf0ddc13db7b",
+    "createdAt": "2026-09-29T10:16:00.000Z",
+    "updatedAt": "2026-09-29T10:16:00.000Z"
+  }
+}
+```
 
 ### Inventory Items
 
@@ -204,9 +420,30 @@ Returns the household's items. Optional query parameters:
 
 Items default to newest first by `createdAt`.
 
+Example success response (`200 OK`):
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "64f1f3e6c6b0d8e4f1b9a789",
+      "name": "Milk",
+      "barcode": "123456789012",
+      "expiry": "2026-10-15T00:00:00.000Z",
+      "householdId": ["64f1f3d3c6b0d8e4f1b9a456"],
+      "createdAt": "2026-09-29T10:18:00.000Z",
+      "updatedAt": "2026-09-29T10:18:00.000Z"
+    }
+  ]
+}
+```
+
 #### `POST /households/:householdId/items`
 
 Adds an item. `barcode` must be exactly 12 characters and `expiry` must be a valid date.
+
+Request body:
 
 ```json
 {
@@ -216,17 +453,112 @@ Adds an item. `barcode` must be exactly 12 characters and `expiry` must be a val
 }
 ```
 
+Example success response (`200 OK`):
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "64f1f3d3c6b0d8e4f1b9a456",
+    "name": "Kitchen Inventory",
+    "inviteCode": "6c5f5ea0-b48b-4d17-91d1-cf0ddc13db7b",
+    "inventory": [
+      {
+        "id": "64f1f3e6c6b0d8e4f1b9a789",
+        "name": "Milk",
+        "barcode": "123456789012",
+        "expiry": "2026-10-15T00:00:00.000Z",
+        "householdId": ["64f1f3d3c6b0d8e4f1b9a456"],
+        "createdAt": "2026-09-29T10:18:00.000Z",
+        "updatedAt": "2026-09-29T10:18:00.000Z"
+      }
+    ],
+    "createdAt": "2026-09-29T10:16:00.000Z",
+    "updatedAt": "2026-09-29T10:16:00.000Z"
+  }
+}
+```
+
 #### `PATCH /households/:householdId/:itemId`
 
 Updates any supplied item fields: `name`, `barcode`, or `expiry`.
+
+Request body:
+
+```json
+{
+  "name": "Semi-skimmed milk",
+  "expiry": "2026-10-20T00:00:00.000Z"
+}
+```
+
+Example success response (`200 OK`):
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "64f1f3d3c6b0d8e4f1b9a456",
+    "name": "Kitchen Inventory",
+    "inviteCode": "6c5f5ea0-b48b-4d17-91d1-cf0ddc13db7b",
+    "inventory": [
+      {
+        "id": "64f1f3e6c6b0d8e4f1b9a789",
+        "name": "Semi-skimmed milk",
+        "barcode": "123456789012",
+        "expiry": "2026-10-20T00:00:00.000Z",
+        "householdId": ["64f1f3d3c6b0d8e4f1b9a456"],
+        "createdAt": "2026-09-29T10:18:00.000Z",
+        "updatedAt": "2026-09-29T10:19:00.000Z"
+      }
+    ],
+    "createdAt": "2026-09-29T10:16:00.000Z",
+    "updatedAt": "2026-09-29T10:19:00.000Z"
+  }
+}
+```
 
 #### `GET /households/:householdId/:itemId/status`
 
 Returns the item with an expiry status of `fresh`, `Expires Soon`, or `Expired`.
 
+Example success response (`200 OK`):
+
+```json
+{
+  "success": true,
+  "data": {
+    "status": "fresh",
+    "id": "64f1f3e6c6b0d8e4f1b9a789",
+    "name": "Milk",
+    "barcode": "123456789012",
+    "expiry": "2026-10-15T00:00:00.000Z",
+    "householdId": ["64f1f3d3c6b0d8e4f1b9a456"],
+    "createdAt": "2026-09-29T10:18:00.000Z",
+    "updatedAt": "2026-09-29T10:18:00.000Z"
+  }
+}
+```
+
 #### `DELETE /households/:householdId/:itemId`
 
 Deletes the item from the household inventory.
+
+Example success response (`200 OK`):
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "64f1f3d3c6b0d8e4f1b9a456",
+    "name": "Kitchen Inventory",
+    "inviteCode": "6c5f5ea0-b48b-4d17-91d1-cf0ddc13db7b",
+    "inventory": [],
+    "createdAt": "2026-09-29T10:16:00.000Z",
+    "updatedAt": "2026-09-29T10:20:00.000Z"
+  }
+}
+```
 
 ## Data Model
 
