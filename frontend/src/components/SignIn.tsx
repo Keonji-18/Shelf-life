@@ -1,0 +1,104 @@
+import {type FormEvent, useState} from "react";
+import {AlertCircle, CheckCircle2Icon} from "lucide-react"
+import axios from "axios";
+import {Link} from "react-router-dom";
+import {Input} from "@/components/ui/input"
+import {Field, FieldLabel} from "@/components/ui/field"
+import { buttonVariants } from "@/components/ui/button"
+import {Alert, AlertDescription, AlertTitle,} from "@/components/ui/alert"
+import './styles/signin.css'
+
+export default function SignIn() {
+
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [success, setSuccess] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
+
+    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+
+        axios.post('http://localhost:3000/users/login', {email, password})
+
+            .then((response) => {
+                console.log('Data sent successfully:', response.data)
+                console.log(response)
+                if(!response.data.success){
+                    setErrorMessage(response.data.message || "Something went wrong");
+                    throw new Error(response.data.message || "Something went wrong");
+                }
+                setSuccess(true)
+
+            })
+            .catch((error) => {
+                setErrorMessage(error.response.data.message || "Something went wrong")
+                console.error('Something went wrong:', error);
+            });
+
+        setEmail('')
+        setPassword('')
+    }
+    return (<>
+
+
+        <div className="sign-in-container">
+            <div className="head-container">
+                <h1>Sign in to your account</h1>
+                <p>Welcome back! Please enter your details</p>
+            </div>
+
+            <form onSubmit={handleSubmit}>
+
+                {errorMessage !== "" && !success &&(
+                    <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Submission Failed</AlertTitle>
+                        <AlertDescription>{errorMessage}</AlertDescription>
+                    </Alert>
+                )}
+
+                {
+                    // success ? useNavigate('')
+                    success && (<Alert className="max-w-md">
+                        <CheckCircle2Icon/>
+                        <AlertTitle>Logged In Successful</AlertTitle>
+                        <AlertDescription>
+
+                        </AlertDescription>
+                    </Alert>)
+                }
+                <Field>
+                    <FieldLabel htmlFor="input-field-email">Email:</FieldLabel>
+                    <Input
+
+                        id="input-field-email"
+                        required
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                    />
+                    {/*<FieldDescription>*/}
+                    {/*    Write your email*/}
+                    {/*</FieldDescription>*/}
+                </Field>
+
+                <Field >
+                    <FieldLabel htmlFor="input-field-password">Password:</FieldLabel>
+                    <Input
+                        id="input-field-password"
+                        required
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                    />
+                </Field>
+                <button className={buttonVariants({ variant: "default", size: "sm" })} type="submit">Sign in</button>
+            </form>
+
+
+            <p>Don't have an account? <Link to={'/signUp'}><span className="underline accent-blue-300">Sign up</span></Link></p>
+        </div>
+
+
+    </>)
+}

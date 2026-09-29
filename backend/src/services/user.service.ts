@@ -48,7 +48,7 @@ const login = async (loginDetails:LoginUser) =>{
 
     if(!user){
         throw new AppError("Invalid Email or Password",
-            HTTP_STATUS.UNAUTHORIZED,
+            HTTP_STATUS.BAD_REQUEST,
             ERROR_CODES.INVALID_CREDENTIALS)
     }
 
@@ -56,7 +56,7 @@ const login = async (loginDetails:LoginUser) =>{
 
     if(!isPasswordValid){
         throw new AppError("Invalid Email or Password",
-            HTTP_STATUS.UNAUTHORIZED,
+            HTTP_STATUS.BAD_REQUEST,
             ERROR_CODES.INVALID_CREDENTIALS)
     }
 

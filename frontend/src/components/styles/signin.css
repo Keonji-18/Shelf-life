@@ -1,0 +1,40 @@
+
+
+
+body {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.sign-in-container {
+    width: 150%;
+    height: 150%;
+    /* Syntax: padding: Y-axis X-axis; */
+    padding: 30px 40px;
+
+    border-radius: 10px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+
+    border: #420d0d solid 2px;
+}
+
+h1 {
+    font-weight: bold;
+    font-size: large;
+}
+
+form {
+    width: 80%;
+    display: flex;
+    flex-direction: column;
+    gap: 1.6rem;
+}

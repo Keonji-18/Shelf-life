@@ -7,9 +7,11 @@ import {userRouter} from "./routes/user.route";
 import {householdRouter} from "./routes/household.route";
 import {authenticateUser} from "./middleware/auth.middleware";
 import {itemRouter} from "./routes/item.route";
+import cors from "cors";
 
 export const app = express()
 
+app.use(cors())
 app.use(requestContextMiddleware)
 app.use(requestLoggerMiddleware)
 app.use(express.json())

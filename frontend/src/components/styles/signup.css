@@ -1,0 +1,15 @@
+
+.sign-up-container {
+    width: 150%;
+    height: 150%;
+
+    padding: 30px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+
+
+    border: #440c0c 2px solid;
+}
