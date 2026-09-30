@@ -2,13 +2,12 @@ import {type FormEvent, useState} from "react";
 import {AlertCircle, CheckCircle2Icon} from "lucide-react"
 import axios from "axios";
 import {Link} from "react-router-dom";
-import {Input} from "@/components/ui/input"
-import {Field, FieldLabel} from "@/components/ui/field"
-import { buttonVariants } from "@/components/ui/button"
-import {Alert, AlertDescription, AlertTitle,} from "@/components/ui/alert"
+import {Input} from "@/components/ui/input.tsx"
+import {Field, FieldLabel} from "@/components/ui/field.tsx"
+import { buttonVariants } from "@/components/ui/button.tsx"
+import {Alert, AlertDescription, AlertTitle,} from "@/components/ui/alert.tsx"
 import './styles/signin.css'
 import type {LogInResponseBody} from "@/@types.tsx";
-import Logout from "@/components/Logout.tsx";
 
 export default function SignIn() {
 
@@ -104,7 +103,6 @@ export default function SignIn() {
 
             <p>Don't have an account? <Link to={'/signUp'}><span className="underline accent-blue-300">Sign up</span></Link></p>
         </div>
-        <Logout />
 
 
     </>)

@@ -1,4 +1,5 @@
 import {Link} from 'react-router-dom'
+import {EmptyHousehold} from "@/pages/EmptyHousehold.tsx";
 
 export default function Home(){
     return(
