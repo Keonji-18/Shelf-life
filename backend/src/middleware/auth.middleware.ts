@@ -18,7 +18,7 @@ export const authenticateUser = (
 
 )=>{
 
-    const token:string = req.cookies.ACCESS_TOKEN;
+    const token = req.cookies['ACCESS_TOKEN'] as string;
     const result = verifyAccessToken(token)
 
     req.userId = result.id

@@ -1,6 +1,6 @@
 import axios,{AxiosError} from "axios";
 import {useState} from "react";
-import {useNavigate} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 import {Field, FieldLabel, FieldDescription} from "@/components/ui/field.tsx";
 import {Input} from "@/components/ui/input.tsx";
 import "./styles/signup.css"
@@ -13,12 +13,6 @@ interface PostData{
     name: string;
     email: string;
     password: string;
-}
-
-interface ApiErrorResponse {
-    message: string;
-    code?: string;
-    errors?: Record<string, string[]>;
 }
 
 
@@ -69,8 +63,8 @@ export default function SignUp(){
 
        }catch (error){
 
-            if(axios.isAxiosError<ApiErrorResponse>(error)){
-                setErrorMessage(error?.response?.data?.error.message || "Something went wrong")
+            if(axios.isAxiosError(error)){
+                setErrorMessage(error?.response?.data?.error?.message || "Something went wrong")
                 console.log(errorMessage)
             }else {
                 setErrorMessage("Something went wrong")
@@ -93,7 +87,7 @@ export default function SignUp(){
             )}
 
             {
-                // success ? useNavigate('')
+
                 success && (<Alert className="max-w-md">
                     <CheckCircle2Icon/>
                     <AlertTitle>Logged In Successful</AlertTitle>
@@ -110,6 +104,7 @@ export default function SignUp(){
                         id="input-field-email"
                         required
                         type="text"
+                        minLength={3}
                         name={"name"}
                         value={postData.name}
                         onChange={handleChange}
@@ -142,6 +137,7 @@ export default function SignUp(){
                         required
                         type="password"
                         name={"password"}
+                        minLength={8}
                         value={postData.password}
                         onChange={handleChange}
                     />
@@ -152,6 +148,7 @@ export default function SignUp(){
 
                 <button className={buttonVariants({ variant: "default", size: "sm" })} type="submit">Sign Up</button>
             </form>
+            <p>Already have an account? <Link to={'/signIn'}><span className="underline accent-blue-300">Sign in</span></Link></p>
         </div>
 
     </>)

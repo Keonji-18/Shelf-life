@@ -193,6 +193,7 @@ Example success response (`200 OK`):
     "id": "64f1f3c7c6b0d8e4f1b9a123",
     "name": "Jane Doe",
     "email": "jane@example.com",
+    "householdId": "64f1f3d3c6b0d8e4f1b9a456",
     "createdAt": "2026-09-29T10:15:00.000Z",
     "updatedAt": "2026-09-29T10:15:00.000Z"
   }

@@ -48,6 +48,7 @@ export function toUserLoginDto(user:User, token:string){
             id: user.id,
             name: user.name,
             email : user.email,
+            householdId: user.householdId,
             createdAt: user.createdAt,
             updatedAt : user.updatedAt
             },

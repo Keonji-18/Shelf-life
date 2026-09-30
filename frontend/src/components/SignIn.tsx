@@ -7,6 +7,8 @@ import {Field, FieldLabel} from "@/components/ui/field"
 import { buttonVariants } from "@/components/ui/button"
 import {Alert, AlertDescription, AlertTitle,} from "@/components/ui/alert"
 import './styles/signin.css'
+import type {LogInResponseBody} from "@/@types.tsx";
+import Logout from "@/components/Logout.tsx";
 
 export default function SignIn() {
 
@@ -18,11 +20,12 @@ export default function SignIn() {
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
 
-        axios.post('http://localhost:3000/users/login', {email, password})
+        axios.post('http://localhost:3000/users/login', {email, password}, { withCredentials: true })
 
             .then((response) => {
-                console.log('Data sent successfully:', response.data)
-                console.log(response)
+
+                const responseData = response.data.data as LogInResponseBody;
+                console.log('Data sent successfully:', responseData)
                 if(!response.data.success){
                     setErrorMessage(response.data.message || "Something went wrong");
                     throw new Error(response.data.message || "Something went wrong");
@@ -31,7 +34,12 @@ export default function SignIn() {
 
             })
             .catch((error) => {
-                setErrorMessage(error.response.data.message || "Something went wrong")
+                if(axios.isAxiosError(error)){
+                    setErrorMessage(error?.response?.data?.error?.message || "Something went wrong")
+                    console.log(errorMessage)
+                }else {
+                    setErrorMessage("Something went wrong")
+                }
                 console.error('Something went wrong:', error);
             });
 
@@ -58,7 +66,7 @@ export default function SignIn() {
                 )}
 
                 {
-                    // success ? useNavigate('')
+
                     success && (<Alert className="max-w-md">
                         <CheckCircle2Icon/>
                         <AlertTitle>Logged In Successful</AlertTitle>
@@ -77,9 +85,6 @@ export default function SignIn() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                     />
-                    {/*<FieldDescription>*/}
-                    {/*    Write your email*/}
-                    {/*</FieldDescription>*/}
                 </Field>
 
                 <Field >
@@ -88,6 +93,7 @@ export default function SignIn() {
                         id="input-field-password"
                         required
                         type="password"
+                        minLength={8}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                     />
@@ -98,6 +104,7 @@ export default function SignIn() {
 
             <p>Don't have an account? <Link to={'/signUp'}><span className="underline accent-blue-300">Sign up</span></Link></p>
         </div>
+        <Logout />
 
 
     </>)

@@ -9,7 +9,6 @@ export default function Home(){
 
             </nav>
             <h1>WELCOME TO SHELF LIFE WEB APP</h1>
-
         </>
     )
 }

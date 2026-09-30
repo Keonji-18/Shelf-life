@@ -1,6 +1,3 @@
-
-
-
 body {
     width: 100%;
     height: 100vh;
@@ -13,7 +10,6 @@ body {
 .sign-in-container {
     width: 150%;
     height: 150%;
-    /* Syntax: padding: Y-axis X-axis; */
     padding: 30px 40px;
 
     border-radius: 10px;
