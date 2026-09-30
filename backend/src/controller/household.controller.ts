@@ -64,7 +64,7 @@ async function addMember(
     res: Response
 ){
 
-    const inviteCode = req.query.inviteCode as string;
+    const inviteCode = req.body.inviteCode as string;
 
     const result = await householdService.addMemberToHousehold(inviteCode, req.userId)
     res.status(HTTP_STATUS.OK).json({

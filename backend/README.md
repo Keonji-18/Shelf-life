@@ -359,9 +359,18 @@ Example success response (`200 OK`):
 }
 ```
 
-#### `POST /households/join?inviteCode=<invite-code>`
+#### `POST /households/members`
 
-Joins the household identified by the `inviteCode` query parameter. This endpoint does not expect a request body.
+Joins the household identified by the `inviteCode`  in the body.
+
+
+Request body:
+
+```json
+{
+  "inviteCode": "6c5f5ea0-b48b-4d17-91d1-cf0ddc13db7b"
+}
+```
 
 Example success response (`200 OK`):
 

@@ -8,5 +8,5 @@ householdRouter.post("/", createHouseholdValidator, householdController.create);
 householdRouter.get('/:householdId', householdController.getById);
 householdRouter.get('/:householdId/details', householdController.getDetails);
 householdRouter.get('/:householdId/members', householdController.getMembers);
-householdRouter.post('/join', householdController.addMember)
+householdRouter.post('/members', householdController.addMember)
 householdRouter.delete('/:householdId/members', householdController.deleteMember);

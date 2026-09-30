@@ -27,8 +27,7 @@ import {HTTP_STATUS} from "../core/http/httpStatus";
     const input = req.body as LoginUser
     const result = await userService.login(input);
 
-
-    res.cookie("ACCESS_TOKEN",result.token,{httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000, path: ''});
+    res.cookie("ACCESS_TOKEN",result.token,{httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000, path: '/'});
 
     res.status(HTTP_STATUS.OK).json({
         success: true,
@@ -42,7 +41,6 @@ async function logout(
     req: Request,
     res: Response
 ){
-
 
     res.clearCookie("ACCESS_TOKEN",{httpOnly: true, path: '/'})
 
