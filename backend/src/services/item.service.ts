@@ -9,7 +9,7 @@ import {ItemResponseDto, toItemResponseDto, toItemResponseWithStatusDto} from ".
 import {Prisma} from  "../../generated/prisma"
 
 
-
+const oneDayInMs = 24 * 60 * 60 * 1000
 const getItemsFromHousehold = async (householdId: string, whereClause: Prisma.itemWhereInput, orderByClause:Prisma.itemOrderByWithRelationInput)=> {
 
     const result = await itemRepo.getItemsFromHousehold(householdId, whereClause, orderByClause);
@@ -49,7 +49,7 @@ const addItemToHousehold = async (householdId: string, itemInput: ItemInput) => 
 
     itemInput.name = itemInput.name.trim().toLowerCase()
     itemInput.expiry = new Date(itemInput.expiry)
-
+    console.log(householdId)
     const result = await itemRepo.addItemToHousehold(itemInput, householdId)
 
     return toHouseholdDtoWithInventoryDto(result)

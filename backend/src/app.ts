@@ -22,7 +22,7 @@ app.use(cookieParser())
 
 app.use('/users',userRouter)
 app.use('/households', authenticateUser, householdRouter)
-app.use('/households/:householdId', authenticateUser, itemRouter)
+app.use('/households', authenticateUser, itemRouter)
 
 app.get('/', (req, res) => {
 

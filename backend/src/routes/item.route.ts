@@ -5,8 +5,8 @@ import {addItemValidator, updateItemValidator} from "../middleware/validator.mid
 
 export const itemRouter = Router();
 
-itemRouter.get('/items', itemController.getAllItems);
-itemRouter.post('/items', addItemValidator, itemController.addItem)
-itemRouter.patch('/:itemId', updateItemValidator, itemController.updateItem)
-itemRouter.get('/:itemId/status', itemController.getItemStatus)
-itemRouter.delete('/:itemId', itemController.deleteItem);
+itemRouter.get('/:householdId/items', itemController.getAllItems);
+itemRouter.post('/:householdId/items', addItemValidator, itemController.addItem)
+itemRouter.patch('/:householdId/:itemId', updateItemValidator, itemController.updateItem)
+itemRouter.get('/:householdId/:itemId/status', itemController.getItemStatus)
+itemRouter.delete('/:householdId/:itemId', itemController.deleteItem);

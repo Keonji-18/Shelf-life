@@ -64,7 +64,6 @@ async function addItem(
 ){
     const householdId = req.params.householdId as string;
     const itemInput = req.body as ItemInput;
-    console.log(itemInput)
 
     const result = await itemService.addItemToHousehold(householdId, itemInput)
 

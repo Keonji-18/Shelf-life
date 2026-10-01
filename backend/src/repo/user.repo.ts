@@ -26,9 +26,17 @@ async function createUser(data: Prisma.userCreateInput) {
     });
 }
 
+async function getAllUsersEmails()  {
+    return prisma.user.findMany({
+        select: {
+            email: true
+        }
+    })
+}
 
 export const userRepo={
     getUserByEmail,
     getUserById,
-    createUser
+    createUser,
+    getAllUsersEmails,
 }
