@@ -25,6 +25,7 @@ export default function Logout() {
             }
 
             setSuccess(true)
+            localStorage.removeItem("isLoggedIn");
             navigate('/signin', { replace: true });
 
 

@@ -29,12 +29,31 @@ export type HouseholdMemberBody = {
     "createdAt": string,
     "updatedAt": string
 }
+export type ItemResponseBody = {
+    "id": string,
+    "name": string,
+    "barcode": string,
+    "expiry": string,
+    "householdId": string,
+    "createdAt": string,
+    "updatedAt": string
+}
 
 export type HouseholdWithMemberResponseBody = {
     "id": string,
     "name": string,
     inviteCode: string,
     members: HouseholdMemberBody[],
+    createdAt: string,
+    "updatedAt": string,
+}
+
+export type HouseholdWithFullDetails = {
+    "id": string,
+    "name": string,
+    inviteCode: string,
+    members: HouseholdMemberBody[],
+    inventory: ItemResponseBody[],
     createdAt: string,
     "updatedAt": string,
 }

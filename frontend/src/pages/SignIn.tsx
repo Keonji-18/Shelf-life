@@ -1,7 +1,7 @@
 import {type FormEvent, useState} from "react";
 import {AlertCircle, CheckCircle2Icon} from "lucide-react"
 import axios from "axios";
-import {Link} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 import {Input} from "@/components/ui/input.tsx"
 import {Field, FieldLabel} from "@/components/ui/field.tsx"
 import { buttonVariants } from "@/components/ui/button.tsx"
@@ -15,6 +15,7 @@ export default function SignIn() {
     const [password, setPassword] = useState('');
     const [success, setSuccess] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
+    const navigate = useNavigate();
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -30,6 +31,14 @@ export default function SignIn() {
                     throw new Error(response.data.message || "Something went wrong");
                 }
                 setSuccess(true)
+                localStorage.setItem("isLoggedIn", "true")
+                console.log(responseData.householdId)
+                if(!responseData.householdId){
+                    navigate('/joinHousehold', {state: responseData})
+                }else{
+                    navigate('/yourHousehold', {state: responseData})
+                }
+
 
             })
             .catch((error) => {
